@@ -31,7 +31,7 @@ func findNearestFieldToDiscover(startField *field, startDirection Direction) (pa
 func findPath(startField *field, startDirection Direction, targetCiterium (func(*field) bool)) (path *NavigationPath) {
 
 	pq := NewNavigationPathPQ()
-	pq.Put(&NavigationPath{start: startField, end: startField, moves: []Direction{}})
+	pq.Put(&NavigationPath{start: startField, startDirection: startDirection, end: startField, moves: []Direction{}})
 
 	visitedPositions := make(map[string]bool)
 

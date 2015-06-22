@@ -26,7 +26,7 @@ func TestPriorityQueue(t *testing.T) {
 
 func createTestPath(length int) (path *NavigationPath) {
 	path = &NavigationPath{
-		nil, nil,
+		nil, NORTH, nil,
 		[]Direction{
 		},
 	}

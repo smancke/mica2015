@@ -7,6 +7,7 @@ import(
 
 type NavigationPath struct {
 	start *field
+	startDirection Direction
 	end *field
 	moves []Direction
 }
@@ -14,6 +15,21 @@ type NavigationPath struct {
 func (path *NavigationPath) String() string {
 	return fmt.Sprintf("%v->%v->%v", path.start.pos, path.moves, path.end.pos)
 }
+
+func (path *NavigationPath) Cost() (int) {
+	return len(path.moves)
+//	cost := 0
+//	direction = path.startDirection
+//	for _,move := range path.moves {
+//		cost++
+//		if move != direction {
+//			cost++
+//		}
+//		direction = move
+//	}
+//	return cost
+}
+
 
 type NavigationPathPQ []*NavigationPath
 
@@ -37,7 +53,7 @@ func (pq NavigationPathPQ) Len() int {
 }
 
 func (pq NavigationPathPQ) Less(i, j int) bool {
-	return len(pq[i].moves) < len(pq[j].moves)
+	return pq[i].Cost() < pq[j].Cost()
 }
 
 func (pq NavigationPathPQ) Swap(i, j int) {

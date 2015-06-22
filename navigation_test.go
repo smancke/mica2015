@@ -39,5 +39,6 @@ func TestFindNearestFieldToDiscover(t *testing.T) {
 	assert.Equal(t, NORTH, moves[0])
 	assert.Equal(t, NORTH, moves[1])
 	assert.Equal(t, WEST, moves[2])
-	
+
+	assert.Equal(t, 4, navigationPath.Cost())
 }
