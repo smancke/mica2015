@@ -42,10 +42,12 @@ func TestUpdateMaze_BasicCase(t *testing.T) {
 	assert.True(t, maze.getFieldByPosition(Position{0,2}).isWall == false)
 
 	assert.Equal(t, maze.getFieldByPosition(Position{0,2}).beside[EAST], maze.getFieldByPosition(Position{1,2}))
+	assert.Equal(t, maze.getFieldByPosition(Position{1,2}).beside[WEST], maze.getFieldByPosition(Position{0,2}))
 	assert.True(t, maze.getFieldByPosition(Position{1,2}).isWall == false)
 	assert.True(t, maze.getFieldByPosition(Position{1,2}).wallStatusKnown)
 
 	assert.Equal(t, maze.getFieldByPosition(Position{0,2}).beside[WEST], maze.getFieldByPosition(Position{-1,2}))
+	assert.Equal(t, maze.getFieldByPosition(Position{-1,2}).beside[EAST], maze.getFieldByPosition(Position{0,2}))
 	assert.True(t, maze.getFieldByPosition(Position{-1,2}).isWall == false)
 	assert.True(t, maze.getFieldByPosition(Position{-1,2}).wallStatusKnown)
 

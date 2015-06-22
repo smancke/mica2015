@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"testing"
 	"github.com/stretchr/testify/assert"
 )
@@ -35,7 +34,7 @@ func TestFindNearestFieldToDiscover(t *testing.T) {
 	assert.Equal(t, maze.getFieldByPosition(Position{-1,2}), navigationPath.end)
 
 	moves := navigationPath.moves
-	fmt.Printf("moves: %v", moves)
+
 	assert.Equal(t, 3, len(moves)) 
 	assert.Equal(t, NORTH, moves[0])
 	assert.Equal(t, NORTH, moves[1])

@@ -1,8 +1,8 @@
 package main
 
 import (
-	"fmt"
 	"os"
+	"fmt"
 	"log"
 	"math"
 	tm "github.com/buger/goterm"
@@ -124,6 +124,12 @@ func (this *maze) FindButtons() {
 		if nextButtonField != nil {
 			log.Printf("next button: %v -- going to take it at: %v", this.buttonToCollect, nextButtonField)
 			this.goTo(nextButtonField)
+			button := this.client.Push()
+			if button == this.buttonToCollect {
+				this.buttonToCollect++
+			} else {
+				log.Fatalf("button %v expected, but found %v at %v", this.buttonToCollect, button, this.robotPosition)
+			}
 		} else {
 			log.Printf("button %v not found; discover from %v", this.buttonToCollect, this.robotPosition)
 			this.discover()
@@ -137,7 +143,7 @@ func (this *maze) discover() {
 	this.ensureButtonStatusIsKnown()
 
 	for this.shouldTakeALookAtAnyNeighbour() {
-		// TODO: optimize, not only to turn right
+		// TODO: optimize, not only to turn right??
 		if this.shouldTakeALook(this.robotDirection) {
 			this.look()
 		}
@@ -153,14 +159,18 @@ func (this *maze) discover() {
 	log.Printf("NearestFieldToDiscover %v", navigationPath)
 	if navigationPath != nil {
 		this.doMoves(navigationPath)
+	} else {
+		log.Printf("No more Fields to discover")
 	}
 }
 
 func (this *maze) turnTo(direction Direction) {
-	//log.Printf("start turnTo(%v): %v", direction, this.robotDirection)
-	//TODO: optimize
+	if direction == this.robotDirection.left() {
+		this.turnLeft()
+		return
+	}
+	
 	for direction != this.robotDirection {
-		//log.Printf("turnTo(%v): %v", direction, this.robotDirection)
 		this.turnRight()
 	}
 }
@@ -179,9 +189,12 @@ func (this *maze) doMoves(moves *NavigationPath) {
 
 
 func (this *maze) goTo(f *field) {
-	// todo: implement
-	log.Printf("TODO: implement goto %v!!!", f)
-	os.Exit(1)
+	navigationPath := findPathTo(this.robotPosition, this.robotDirection, f)
+	if navigationPath != nil {
+		this.doMoves(navigationPath)
+	} else {
+		log.Printf("No path found from %v to %v", this.robotPosition, f)
+	}
 }
 
 func (this *maze) turnRight() {
@@ -207,6 +220,7 @@ func (this *maze) ensureButtonStatusIsKnown() {
 	this.robotPosition.buttonStatusKnown = true	
 	if button > -1 {
 		this.robotPosition.buttonId = button
+		this.buttonFields[button] = this.robotPosition
 	}	
 }
 	
@@ -239,6 +253,7 @@ func (this *maze) look() {
 }
 
 func (this *maze) updateMaze(looks [5]LookDescription) {
+	
 	prev := this.robotPosition	
 	for _,look := range looks {
 
@@ -269,12 +284,14 @@ func (this *maze) updateMaze(looks [5]LookDescription) {
 		
 		if current.beside[this.left()] == nil {
 			current.beside[this.left()] = this.getFieldByPosition( current.pos.next(this.left()) )
+			current.beside[this.left()].beside[this.right()] = current
 			current.beside[this.left()].isWall = ! look.left
 			current.beside[this.left()].wallStatusKnown = true
 		}
 
 		if current.beside[this.right()] == nil {
 			current.beside[this.right()] = this.getFieldByPosition( current.pos.next(this.right()) )
+			current.beside[this.right()].beside[this.left()] = current
 			current.beside[this.right()].isWall = ! look.right
 			current.beside[this.right()].wallStatusKnown = true
 		}
@@ -283,11 +300,18 @@ func (this *maze) updateMaze(looks [5]LookDescription) {
 	}
 }
 
-
 func (this *maze) plot() {
+	if len(os.Args) < 2 || os.Args[1] != "--show" {
+		return
+	}
 	tm.Clear()
 	tm.MoveCursor(1,1)
-	tm.Print("\n\nMaze:\n")
+	nextButtonField := this.buttonFields[this.buttonToCollect]
+	if nextButtonField == nil {
+		tm.Printf("\nMaze: DISCOVER %v\n", this.buttonToCollect)
+	} else {
+		tm.Printf("\nMaze: FETCH    %v\n", this.buttonToCollect)
+	}
 
 	size := 20
 	pos := Position{size,size}
@@ -323,5 +347,6 @@ func (this *maze) plot() {
 		tm.Print("\n")
 	}
 	tm.Flush()
+	//waitForAnyKey()
 }
 
