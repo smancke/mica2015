@@ -1,7 +1,6 @@
 package main
 
 import (
-	"os"
 	"fmt"
 	"log"
 	"math"
@@ -85,6 +84,7 @@ type maze struct {
 	buttonToCollect int
 	robotPosition *field
 	robotDirection Direction
+	enablePlot bool
 }
 
 func NewMaze(client MazeClient) (this *maze) {
@@ -301,9 +301,10 @@ func (this *maze) updateMaze(looks [5]LookDescription) {
 }
 
 func (this *maze) plot() {
-	if len(os.Args) < 2 || os.Args[1] != "--show" {
-		return
+	if ! this.enablePlot {
+		return 
 	}
+
 	tm.Clear()
 	tm.MoveCursor(1,1)
 	nextButtonField := this.buttonFields[this.buttonToCollect]

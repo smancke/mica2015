@@ -2,8 +2,10 @@ package main
 
 import (
 	"log"
+	"fmt"
 	"strconv"
 	"golang.org/x/net/websocket"
+	"encoding/json"
 )
 
 type MazeClient interface {
@@ -19,6 +21,7 @@ type Client struct {
 	ws *websocket.Conn
 	origin string
 	url string
+	name string
 }
 
 type LookDescription struct {
@@ -40,6 +43,11 @@ type ResultMsg struct {
 	Step5 string `json:"5"`
 }
 
+func (msg *ResultMsg) String() string {
+	b, _ := json.Marshal(msg)
+	return string(b)
+}
+
 type HelloMsg struct {
 	Name string `json:"name"`
 	Maze string `json:"maze"`
@@ -49,15 +57,16 @@ type ActionMsg struct {
 	Action string `json:"action"`
 }
 
-func NewClient(url string) *Client {
+func NewClient(url string, name string) *Client {
 	c := new(Client)
 	c.origin = "http://localhost/"
 	c.url = url
-
+	c.name = name
+	
 	return c
 }
 
-func (c *Client) Connect() {	
+func (c *Client) Connect() error {	
 	log.Printf("----> connecting ..")
 
 	var answer ResultMsg
@@ -65,22 +74,36 @@ func (c *Client) Connect() {
 	ws, err := websocket.Dial(c.url, "", c.origin)
 	if err != nil {
 		log.Fatal(err)
+		return err
 	}
 	c.ws = ws
 
 	websocket.JSON.Receive(c.ws, &answer)
 	log.Printf("----> connect: %v", answer)
+	if answer.Result != "ok" {
+		return fmt.Errorf("Error from server: %v", answer.String())
+	}
 
-	hello := HelloMsg{Name: "go42", Maze: ""}
+	hello := HelloMsg{Name: name, Maze: ""}
 	websocket.JSON.Send(c.ws, hello)
-
 	websocket.JSON.Receive(c.ws, &answer)
-	
 	log.Printf("----> hello: %v", answer)
+	if answer.Result != "ok" {
+		return fmt.Errorf("Error from server: %v", answer.String())
+	}
 
-	websocket.JSON.Receive(c.ws, &answer)
-	
-	log.Printf("----> hello2: %v", answer)
+	return nil
+}
+
+func (c *Client) waitForGamestart() error {
+	var answer ResultMsg
+	websocket.JSON.Receive(c.ws, &answer)	
+	log.Printf("----> gamestart: %v", answer)
+	if answer.Message != "new game" {
+		return fmt.Errorf("Error from server: %v", answer.String())
+	}
+
+	return nil
 }
 
 
