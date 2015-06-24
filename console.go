@@ -13,4 +13,6 @@ func waitForAnyKey() {
 	
 	var b []byte = make([]byte, 1)
 	os.Stdin.Read(b)
+	exec.Command("stty", "-F", "/dev/tty", "-cbreak").Run()
+	exec.Command("stty", "-F", "/dev/tty", "echo").Run()
 }

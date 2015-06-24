@@ -10,6 +10,7 @@ type NavigationPath struct {
 	startDirection Direction
 	end *field
 	moves []Direction
+	takeBenefitIntoAccount bool
 }
 
 func (path *NavigationPath) String() string {
@@ -17,9 +18,20 @@ func (path *NavigationPath) String() string {
 }
 
 func (path *NavigationPath) Cost() (int) {
-	return len(path.moves)
+	cost := len(path.moves)
+
+//	interestingNeighbourCount := 0
+//	if path.takeBenefitIntoAccount {
+//		for _, direction := range []Direction{NORTH, EAST, WEST, SOUTH} {
+//			if path.end.beside[direction] != nil && (! path.end.beside[direction].buttonStatusKnown || ! path.end.beside[direction].wallStatusKnown) {
+//				interestingNeighbourCount++
+//			}
+//		}
+//	}
+
+	return cost
 //	cost := 0
-//	direction = path.startDirection
+//	direction := path.startDirection
 //	for _,move := range path.moves {
 //		cost++
 //		if move != direction {

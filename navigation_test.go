@@ -40,5 +40,7 @@ func TestFindNearestFieldToDiscover(t *testing.T) {
 	assert.Equal(t, NORTH, moves[1])
 	assert.Equal(t, WEST, moves[2])
 
-	assert.Equal(t, 3, navigationPath.Cost())
+	assert.Equal(t, 4, navigationPath.Cost())
+	maze.enablePlot = true
+	maze.plot()
 }

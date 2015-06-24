@@ -113,7 +113,15 @@ func (this *maze) getFieldByPosition(pos Position) (f *field){
 	f = this.fields[pos.String()]
 	if f == nil {
 		f = this.NewField( pos )
+		
 	}
+	for _, direction := range []Direction{NORTH, EAST, WEST, SOUTH} {
+		if f.beside[direction] == nil {
+			posBeside := f.pos.next(direction)
+			f.beside[direction] = this.fields[posBeside.String()]
+		}
+	}
+
 	return
 }
 
@@ -124,6 +132,7 @@ func (this *maze) FindButtons() {
 		if nextButtonField != nil {
 			log.Printf("next button: %v -- going to take it at: %v", this.buttonToCollect, nextButtonField)
 			this.goTo(nextButtonField)
+			this.plot()
 			button := this.client.Push()
 			if button == this.buttonToCollect {
 				this.buttonToCollect++
@@ -143,12 +152,18 @@ func (this *maze) discover() {
 	this.ensureButtonStatusIsKnown()
 
 	for this.shouldTakeALookAtAnyNeighbour() {
-		// TODO: optimize, not only to turn right??
 		if this.shouldTakeALook(this.robotDirection) {
 			this.look()
+			this.plot()
 		}
-		if this.shouldTakeALookAtAnyNeighbour() {
-			this.turnRight()
+		if this.shouldTakeALook(this.left()) {
+			this.turnLeft()
+			this.plot()
+		} else {
+			if this.shouldTakeALookAtAnyNeighbour() {
+				this.turnRight()
+				this.plot()
+			}
 		}
 		if this.buttonFields[this.buttonToCollect] != nil {
 			return
@@ -159,6 +174,7 @@ func (this *maze) discover() {
 	log.Printf("NearestFieldToDiscover %v", navigationPath)
 	if navigationPath != nil {
 		this.doMoves(navigationPath)
+		this.plot()
 	} else {
 		log.Printf("No more Fields to discover")
 	}
@@ -181,11 +197,9 @@ func (this *maze) doMoves(moves *NavigationPath) {
 		this.client.Walk()
 		
 		this.robotPosition = this.robotPosition.beside[this.robotDirection]
-		this.plot()
 	}
 }
  	// don't forget to look on buttons on every step
-// func (this *maze) findPath(fOrigin *field, fTarget *field) *[]move
 
 
 func (this *maze) goTo(f *field) {
@@ -200,13 +214,11 @@ func (this *maze) goTo(f *field) {
 func (this *maze) turnRight() {
 	this.client.Right();
 	this.robotDirection = this.robotDirection.right()
-	this.plot()
 }
 
 func (this *maze) turnLeft() {
 	this.client.Left();
 	this.robotDirection = this.robotDirection.left()
-	this.plot()
 }
 
 func (this *maze) ensureButtonStatusIsKnown() {
@@ -225,7 +237,19 @@ func (this *maze) ensureButtonStatusIsKnown() {
 }
 	
 func (this *maze) shouldTakeALook(d Direction) bool {
-	return this.robotPosition.beside[d] == nil
+	steps := 0
+	beside := this.robotPosition.beside[d]
+	for steps < 2  {
+		if (beside == nil || ! beside.wallStatusKnown) {
+			return true
+		}
+		if beside.isWall {
+			return false
+		}
+		beside = beside.beside[d]
+		steps++
+	}
+	return false
 }
 
 func (this *maze) shouldTakeALookAtAnyNeighbour() bool {
@@ -305,49 +329,52 @@ func (this *maze) plot() {
 		return 
 	}
 
-	tm.Clear()
+	waitForAnyKey()
 	tm.MoveCursor(1,1)
-	nextButtonField := this.buttonFields[this.buttonToCollect]
-	if nextButtonField == nil {
-		tm.Printf("\nMaze: DISCOVER %v\n", this.buttonToCollect)
-	} else {
-		tm.Printf("\nMaze: FETCH    %v\n", this.buttonToCollect)
+	tm.Clear()
+	if (this.buttonToCollect < 10) {
+		nextButtonField := this.buttonFields[this.buttonToCollect]
+		if nextButtonField == nil {
+			fmt.Printf("\nMaze: DISCOVER %v\n", this.buttonToCollect)
+		} else {
+			fmt.Printf("\nMaze: FETCH    %v\n", this.buttonToCollect)
+		}
 	}
-
+	
 	size := 20
 	pos := Position{size,size}
 	for ; pos.NORTH >= -1*size; pos.NORTH-- {
+		line := ""
 		for pos.EAST=-1*size; pos.EAST <= size; pos.EAST++ {
 			
 			field := this.getFieldByPosition( pos )
 			if this.robotPosition.pos.NORTH == pos.NORTH && this.robotPosition.pos.EAST == pos.EAST {
 				if this.robotDirection == NORTH {
-					tm.Print("^")
+					line += "^"
 				} else if this.robotDirection == EAST {
-					tm.Print(">")
+					line += ">"
 				} else if this.robotDirection == SOUTH {
-					tm.Print("!")
+					line += "!"
 				} else if this.robotDirection == WEST {
-					tm.Print("<")
+					line += "<"
 				}
 				
 			} else {
 				if ! field.buttonStatusKnown && ! field.wallStatusKnown {
-					tm.Print("?")
+					line += "?"
 				} else {
 					if field.isWall {
-						tm.Printf("#")
+						line += "#"
 					} else if field.buttonId >= 0 {
-						tm.Printf("%d", field.buttonId)
+						line += fmt.Sprintf("%d", field.buttonId)
 					} else {
-						tm.Printf(" ")
+						line += " "
 					}
 				}
 			}
 		}
-		tm.Print("\n")
+		fmt.Println(line)
 	}
-	tm.Flush()
-	//waitForAnyKey()
+	//tm.Flush()
 }
 

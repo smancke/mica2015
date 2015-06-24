@@ -41,6 +41,7 @@ func main() {
 		fmt.Println("start maze solving")
 		maze.FindButtons()
 		fmt.Printf("maze done (%vms)\n", (makeTimestamp()-startTime))
+		maze.plot()
 	}
 }
 
